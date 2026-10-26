@@ -65,6 +65,7 @@ type="text"
 name="title"
 class="form-control"
 value="{{ $link->title }}"
+placeholder="Masukkan judul publikasi..."
 required>
 
 </div>
