@@ -12,306 +12,267 @@ use Barryvdh\DomPDF\Facade\Pdf;
 class ActivityController extends Controller
 {
     /**
-     * Menampilkan daftar kegiatan + Search + Pagination
+     * Menampilkan daftar kegiatan.
      */
     public function index(Request $request)
     {
-        $query = Activity::with([
-            'category',
-            'institution'
-        ]);
+        $query = Activity::with(['category', 'institution'])
+            ->latest();
 
         if ($request->filled('search')) {
-
             $search = $request->search;
 
             $query->where(function ($q) use ($search) {
-
                 $q->where('title', 'like', "%{$search}%")
                     ->orWhere('location', 'like', "%{$search}%")
-
-                    ->orWhereHas('category', function ($q) use ($search) {
-                        $q->where('name', 'like', "%{$search}%");
-                    })
-
-                    ->orWhereHas('institution', function ($q) use ($search) {
-                        $q->where('name', 'like', "%{$search}%");
-                    });
-
+                    ->orWhere('person_in_charge', 'like', "%{$search}%");
             });
         }
 
-        $activities = $query
-            ->latest()
-            ->paginate(10)
-            ->withQueryString();
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
 
-        return view(
-            'admin.activities.index',
-            compact('activities')
-        );
+        $activities = $query->paginate(10)->withQueryString();
+
+        return view('admin.activities.index', compact('activities'));
     }
 
     /**
-     * Data kalender (FullCalendar)
+     * Menampilkan kalender kegiatan.
      */
     public function calendar()
     {
-        $activities = Activity::with('category')->get();
+        $activities = Activity::with(['category', 'institution'])
+            ->orderBy('activity_date')
+            ->get();
 
-        $events = [];
-
-        foreach ($activities as $activity) {
-
-            switch ($activity->status) {
-
-                case 'Draft':
-                    $color = '#6c757d';
-                    break;
-
-                case 'Terjadwal':
-                    $color = '#0d6efd';
-                    break;
-
-                case 'Dipublikasikan':
-                    $color = '#198754';
-                    break;
-
-                case 'Selesai':
-                    $color = '#dc3545';
-                    break;
-
-                default:
-                    $color = '#6c757d';
-                    break;
-            }
-
-            $events[] = [
-
-                'id' => $activity->id,
-
-                'title' => $activity->title,
-
-                'start' => $activity->activity_date,
-
-                'color' => $color,
-
-                'extendedProps' => [
-
-                    'kategori' => optional($activity->category)->name,
-
-                    'lokasi' => $activity->location,
-
-                    'jam' => $activity->start_time . ' - ' . $activity->end_time,
-
-                    'status' => $activity->status,
-
-                    'pic' => $activity->person_in_charge,
-
-                    'deskripsi' => $activity->description
-
-                ]
-
-            ];
-        }
-
-        return response()->json($events);
+        return view('admin.activities.calendar', compact('activities'));
     }
 
     /**
-     * Form tambah kegiatan
+     * Menampilkan formulir tambah kegiatan.
      */
     public function create()
     {
         $categories = Category::orderBy('name')->get();
-
         $institutions = Institution::orderBy('name')->get();
 
         return view(
             'admin.activities.create',
-            compact(
-                'categories',
-                'institutions'
-            )
+            compact('categories', 'institutions')
         );
     }
 
     /**
-     * Simpan kegiatan
+     * Menyimpan kegiatan baru.
      */
     public function store(Request $request)
     {
-        $request->validate([
-            'category_id' => 'required|exists:categories,id',
-            'institution_id' => 'required|exists:institutions,id',
-            'title' => 'required|max:200',
-            'activity_date' => 'required|date',
-            'publish_date' => 'nullable|date',
-            'start_time' => 'required',
-            'end_time' => 'required',
-            'location' => 'required|max:255',
-            'person_in_charge' => 'required|max:255',
-            'description' => 'nullable',
-            'thumbnail' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
-            'status' => 'required'
+        $validated = $request->validate([
+            'category_id' => ['required', 'exists:categories,id'],
+            'institution_id' => ['required', 'exists:institutions,id'],
+            'title' => ['required', 'string', 'max:255'],
+            'activity_date' => ['required', 'date'],
+            'publish_date' => ['nullable', 'date'],
+            'start_time' => ['nullable'],
+            'end_time' => ['nullable'],
+            'location' => ['nullable', 'string', 'max:255'],
+            'person_in_charge' => ['nullable', 'string', 'max:255'],
+            'description' => ['nullable', 'string'],
+            'thumbnail' => ['nullable', 'image', 'max:2048'],
+            'status' => [
+                'required',
+                'in:Draft,Terjadwal,Dipublikasikan,Selesai',
+            ],
         ]);
 
-        $data = $request->all();
-
-        $data['slug'] = Str::slug($request->title);
-
-        if (Activity::where('slug', $data['slug'])->exists()) {
-            $data['slug'] .= '-' . time();
-        }
+        $validated['slug'] = $this->generateUniqueSlug(
+            $validated['title']
+        );
 
         if ($request->hasFile('thumbnail')) {
-
             $file = $request->file('thumbnail');
-
-            $filename = time() . '_' . $file->getClientOriginalName();
+            $filename = uniqid() . '_' . time() . '.' .
+                $file->getClientOriginalExtension();
 
             $file->move(
                 public_path('uploads/activities'),
                 $filename
             );
 
-            $data['thumbnail'] = $filename;
+            $validated['thumbnail'] = $filename;
         }
 
-        Activity::create($data);
+        Activity::create($validated);
 
         return redirect()
             ->route('activities.index')
-            ->with(
-                'success',
-                'Kegiatan berhasil ditambahkan.'
-            );
+            ->with('success', 'Kegiatan berhasil ditambahkan.');
     }
 
     /**
-     * Form edit kegiatan
+     * Menampilkan detail kegiatan.
+     */
+    public function show(Activity $activity)
+    {
+        $activity->load([
+            'category',
+            'institution',
+            'documentations',
+            'links',
+        ]);
+
+        return view('admin.activities.show', compact('activity'));
+    }
+
+    /**
+     * Menampilkan formulir edit kegiatan.
      */
     public function edit(Activity $activity)
     {
         $categories = Category::orderBy('name')->get();
-
         $institutions = Institution::orderBy('name')->get();
 
         return view(
             'admin.activities.edit',
-            compact(
-                'activity',
-                'categories',
-                'institutions'
-            )
+            compact('activity', 'categories', 'institutions')
         );
     }
 
     /**
-     * Update kegiatan
+     * Memperbarui kegiatan.
      */
     public function update(Request $request, Activity $activity)
     {
-
-        $request->validate([
-            'category_id' => 'required|exists:categories,id',
-            'institution_id' => 'required|exists:institutions,id',
-            'title' => 'required|max:200',
-            'activity_date' => 'required|date',
-            'publish_date' => 'nullable|date',
-            'start_time' => 'required',
-            'end_time' => 'required',
-            'location' => 'required|max:255',
-            'person_in_charge' => 'required|max:255',
-            'description' => 'nullable',
-            'thumbnail' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
-            'status' => 'required'
+        $validated = $request->validate([
+            'category_id' => ['required', 'exists:categories,id'],
+            'institution_id' => ['required', 'exists:institutions,id'],
+            'title' => ['required', 'string', 'max:255'],
+            'activity_date' => ['required', 'date'],
+            'publish_date' => ['nullable', 'date'],
+            'start_time' => ['nullable'],
+            'end_time' => ['nullable'],
+            'location' => ['nullable', 'string', 'max:255'],
+            'person_in_charge' => ['nullable', 'string', 'max:255'],
+            'description' => ['nullable', 'string'],
+            'thumbnail' => ['nullable', 'image', 'max:2048'],
+            'status' => [
+                'required',
+                'in:Draft,Terjadwal,Dipublikasikan,Selesai',
+            ],
         ]);
 
-        $data = $request->all();
-
-        $slug = Str::slug($request->title);
-
-        if (
-            Activity::where('slug', $slug)
-                ->where('id', '!=', $activity->id)
-                ->exists()
-        ) {
-            $slug .= '-' . time();
+        if ($validated['title'] !== $activity->title) {
+            $validated['slug'] = $this->generateUniqueSlug(
+                $validated['title'],
+                $activity->id
+            );
         }
 
-        $data['slug'] = $slug;
-
         if ($request->hasFile('thumbnail')) {
+            $directory = public_path('uploads/activities');
 
             if (
                 $activity->thumbnail &&
-                file_exists(public_path('uploads/activities/' . $activity->thumbnail))
+                file_exists($directory . '/' . $activity->thumbnail)
             ) {
-                unlink(public_path('uploads/activities/' . $activity->thumbnail));
+                unlink($directory . '/' . $activity->thumbnail);
+            }
+
+            if (!is_dir($directory)) {
+                mkdir($directory, 0755, true);
             }
 
             $file = $request->file('thumbnail');
+            $filename = uniqid() . '_' . time() . '.' .
+                $file->getClientOriginalExtension();
 
-            $filename = time() . '_' . $file->getClientOriginalName();
+            $file->move($directory, $filename);
 
-            $file->move(
-                public_path('uploads/activities'),
-                $filename
-            );
-
-            $data['thumbnail'] = $filename;
+            $validated['thumbnail'] = $filename;
+        } else {
+            unset($validated['thumbnail']);
         }
 
-        $activity->update($data);
+        $activity->update($validated);
 
         return redirect()
             ->route('activities.index')
-            ->with(
-                'success',
-                'Kegiatan berhasil diperbarui.'
-            );
+            ->with('success', 'Kegiatan berhasil diperbarui.');
     }
 
     /**
-     * Hapus kegiatan
+     * Menghapus kegiatan.
      */
     public function destroy(Activity $activity)
     {
+        $thumbnailPath = public_path(
+            'uploads/activities/' . $activity->thumbnail
+        );
+
         if (
             $activity->thumbnail &&
-            file_exists(public_path('uploads/activities/' . $activity->thumbnail))
+            file_exists($thumbnailPath)
         ) {
-            unlink(public_path('uploads/activities/' . $activity->thumbnail));
+            unlink($thumbnailPath);
         }
 
         $activity->delete();
 
         return redirect()
             ->route('activities.index')
-            ->with(
-                'success',
-                'Kegiatan berhasil dihapus.'
-            );
+            ->with('success', 'Kegiatan berhasil dihapus.');
     }
 
     /**
-     * Export PDF
+     * Mengunduh detail kegiatan dalam bentuk PDF.
      */
-    public function exportPdf()
+    public function exportPdf(Activity $activity)
     {
-        $activities = Activity::with([
-            'category',
-            'institution'
-        ])
-        ->orderBy('activity_date')
-        ->get();
+        $activity->load(['category', 'institution']);
 
         $pdf = Pdf::loadView(
             'admin.activities.pdf',
-            compact('activities')
+            compact('activity')
         );
 
-        return $pdf->download('Data-Kegiatan.pdf');
+        $pdf->setPaper('A4', 'portrait');
+
+        $filename = 'Undangan-' .
+            Str::slug($activity->title) . '.pdf';
+
+        return $pdf->download($filename);
+    }
+
+    /**
+     * Membuat slug unik untuk kegiatan.
+     */
+    private function generateUniqueSlug(
+        string $title,
+        ?int $ignoreId = null
+    ): string {
+        $baseSlug = Str::slug($title);
+
+        if ($baseSlug === '') {
+            $baseSlug = 'kegiatan';
+        }
+
+        $slug = $baseSlug;
+        $counter = 1;
+
+        while (
+            Activity::where('slug', $slug)
+                ->when(
+                    $ignoreId,
+                    fn ($query) => $query->where('id', '!=', $ignoreId)
+                )
+                ->exists()
+        ) {
+            $slug = $baseSlug . '-' . $counter;
+            $counter++;
+        }
+
+        return $slug;
     }
 }
