@@ -1,296 +1,227 @@
+
 @extends('layouts.app')
 
-@section('title','Data Kegiatan')
+@section('title', 'Daftar Kegiatan')
 
 @section('content')
 
-<div class="card shadow">
+<div class="container-fluid">
 
-    <div class="card-header bg-success text-white">
+    <div class="card shadow border-0">
 
-        <div class="d-flex justify-content-between align-items-center flex-wrap">
+        <div class="card-header bg-primary text-white">
 
-            <h4 class="mb-2 mb-md-0">
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2">
 
-                <i class="bi bi-calendar-event"></i>
+                <h4 class="mb-0">
+                    <i class="bi bi-calendar-event"></i>
+                    Daftar Kegiatan
+                </h4>
 
-                Data Kegiatan
-
-            </h4>
-
-            <div>
-
-                <a href="{{ route('activities.export.pdf') }}"
-                   class="btn btn-danger">
-
-                    <i class="bi bi-file-earmark-pdf"></i>
-
-                    Export PDF
-
-                </a>
-
-                <a href="{{ route('activities.create') }}"
-                   class="btn btn-light">
-
+                <a href="{{ route('activities.create') }}" class="btn btn-light">
                     <i class="bi bi-plus-circle"></i>
-
                     Tambah Kegiatan
-
                 </a>
 
             </div>
 
         </div>
 
-    </div>
+        <div class="card-body">
 
-    <div class="card-body">
+            @if (session('success'))
+                <div class="alert alert-success alert-dismissible fade show">
+                    {{ session('success') }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            @endif
 
-        @if(session('success'))
+            @if ($errors->any())
+                <div class="alert alert-danger">
+                    <ul class="mb-0">
+                        @foreach ($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+            @endif
 
-        <div class="alert alert-success alert-dismissible fade show">
+            <form method="GET"
+                  action="{{ route('activities.index') }}"
+                  class="mb-4">
 
-            {{ session('success') }}
+                <div class="row g-2">
 
-            <button class="btn-close"
-                    data-bs-dismiss="alert"></button>
+                    <div class="col-lg-5 col-md-8">
 
-        </div>
+                        <div class="input-group">
 
-        @endif
+                            <input
+                                type="text"
+                                name="search"
+                                class="form-control"
+                                placeholder="Cari judul, lokasi, atau penanggung jawab..."
+                                value="{{ request('search') }}">
 
-        <form action="{{ route('activities.index') }}"
-              method="GET"
-              class="mb-4">
+                            <select name="status" class="form-select">
+                                <option value="">Semua Status</option>
 
-            <div class="row">
+                                @foreach (['Draft', 'Terjadwal', 'Dipublikasikan', 'Selesai'] as $status)
+                                    <option
+                                        value="{{ $status }}"
+                                        {{ request('status') == $status ? 'selected' : '' }}>
+                                        {{ $status }}
+                                    </option>
+                                @endforeach
+                            </select>
 
-                <div class="col-md-6">
+                            <button class="btn btn-primary" type="submit" title="Cari">
+                                <i class="bi bi-search"></i>
+                            </button>
 
-                    <div class="input-group">
+                            @if(request('search') || request('status'))
+                                <a href="{{ route('activities.index') }}"
+                                   class="btn btn-secondary">
+                                    Reset
+                                </a>
+                            @endif
 
-                        <input
-                            type="text"
-                            class="form-control"
-                            name="search"
-                            placeholder="Cari Judul, Lokasi, Kategori atau Instansi..."
-                            value="{{ request('search') }}">
-
-                        <button class="btn btn-primary">
-
-                            <i class="bi bi-search"></i>
-
-                            Cari
-
-                        </button>
-
-                        @if(request('search'))
-
-                        <a href="{{ route('activities.index') }}"
-                           class="btn btn-secondary">
-
-                            Reset
-
-                        </a>
-
-                        @endif
+                        </div>
 
                     </div>
 
                 </div>
 
+            </form>
+
+            <div class="table-responsive">
+
+                <table class="table table-bordered table-hover align-middle">
+
+                    <thead class="table-dark text-center">
+
+                        <tr>
+                            <th width="70">No</th>
+                            <th>Judul Kegiatan</th>
+                            <th>Kategori</th>
+                            <th width="150">Tanggal Kegiatan</th>
+                            <th width="160">Status</th>
+                            <th width="150">Aksi</th>
+                        </tr>
+
+                    </thead>
+
+                    <tbody>
+
+                        @forelse($activities as $activity)
+
+                            <tr>
+
+                                <td class="text-center">
+                                    {{ $activities->firstItem() + $loop->index }}
+                                </td>
+
+                                <td>
+                                    <strong>{{ $activity->title }}</strong>
+
+                                    @if ($activity->location)
+                                        <div class="text-muted small">
+                                            <i class="bi bi-geo-alt"></i>
+                                            {{ $activity->location }}
+                                        </div>
+                                    @endif
+                                </td>
+
+                                <td>
+                                    {{ $activity->category->name ?? '-' }}
+                                </td>
+
+                                <td class="text-center">
+                                    {{ $activity->activity_date
+                                        ? \Illuminate\Support\Carbon::parse($activity->activity_date)->format('d-m-Y')
+                                        : '-' }}
+                                </td>
+
+                                <td class="text-center">
+
+                                    @php
+                                        $statusClass = match ($activity->status) {
+                                            'Draft' => 'bg-secondary',
+                                            'Terjadwal' => 'bg-warning text-dark',
+                                            'Dipublikasikan' => 'bg-success',
+                                            'Selesai' => 'bg-primary',
+                                            default => 'bg-secondary',
+                                        };
+                                    @endphp
+
+                                    <span class="badge {{ $statusClass }}">
+                                        {{ $activity->status ?? '-' }}
+                                    </span>
+
+                                </td>
+
+                                <td class="text-center">
+
+                                    {{-- Detail --}}
+                                    <a href="{{ route('activities.show', $activity->id) }}"
+                                       class="btn btn-info btn-sm"
+                                       title="Detail Kegiatan"
+                                       aria-label="Detail Kegiatan">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+
+                                    {{-- Edit --}}
+                                    <a href="{{ route('activities.edit', $activity->id) }}"
+                                       class="btn btn-warning btn-sm"
+                                       title="Edit Kegiatan"
+                                       aria-label="Edit Kegiatan">
+                                        <i class="bi bi-pencil-square"></i>
+                                    </a>
+
+                                    {{-- Hapus --}}
+                                    <form
+                                        action="{{ route('activities.destroy', $activity->id) }}"
+                                        method="POST"
+                                        class="d-inline"
+                                        onsubmit="return confirm('Yakin ingin menghapus kegiatan ini? Data yang dihapus tidak dapat dipulihkan.');">
+
+                                        @csrf
+                                        @method('DELETE')
+
+                                        <button
+                                            type="submit"
+                                            class="btn btn-danger btn-sm delete-confirm"
+                                            title="Hapus Kegiatan"
+                                            aria-label="Hapus Kegiatan">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+
+                                    </form>
+
+                                </td>
+
+                            </tr>
+
+                        @empty
+
+                            <tr>
+                                <td colspan="6" class="text-center py-4">
+                                    <i class="bi bi-calendar-x fs-3 d-block mb-2"></i>
+                                    Tidak ada data kegiatan.
+                                </td>
+                            </tr>
+
+                        @endforelse
+
+                    </tbody>
+
+                </table>
+
             </div>
 
-        </form>
-
-        <div class="table-responsive">
-
-            <table class="table table-bordered table-hover align-middle">
-
-                <thead class="table-dark text-center">
-
-                <tr>
-
-                    <th width="60">No</th>
-
-                    <th width="90">Thumbnail</th>
-
-                    <th>Judul</th>
-
-                    <th>Kategori</th>
-
-                    <th>Instansi</th>
-
-                    <th width="120">Tanggal</th>
-
-                    <th width="130">Status</th>
-
-                    <th width="170">Aksi</th>
-
-                </tr>
-
-                </thead>
-
-                <tbody>
-
-                @forelse($activities as $activity)
-
-                <tr>
-
-                    <td class="text-center">
-
-                        {{ $activities->firstItem() + $loop->index }}
-
-                    </td>
-
-                    <td class="text-center">
-
-                        @if($activity->thumbnail)
-
-                            <img
-                                src="{{ asset('uploads/activities/'.$activity->thumbnail) }}"
-                                class="rounded shadow-sm"
-                                style="width:70px;height:70px;object-fit:cover;">
-                        @else
-
-                            -
-
-                        @endif
-
-                    </td>
-
-                    <td>
-
-                        <strong>
-
-                            {{ $activity->title }}
-
-                        </strong>
-
-                        <br>
-
-                        <small class="text-muted">
-
-                            {{ $activity->location }}
-
-                        </small>
-
-                    </td>
-
-                    <td>
-
-                        {{ $activity->category->name }}
-
-                    </td>
-
-                    <td>
-
-                        {{ $activity->institution->name }}
-
-                    </td>
-
-                    <td class="text-center">
-
-                        {{ \Carbon\Carbon::parse($activity->activity_date)->format('d-m-Y') }}
-
-                    </td>
-
-                    <td class="text-center">
-
-                        @if($activity->status=='Draft')
-
-                            <span class="badge bg-secondary">
-
-                                Draft
-
-                            </span>
-
-                        @elseif($activity->status=='Terjadwal')
-
-                            <span class="badge bg-warning text-dark">
-
-                                Terjadwal
-
-                            </span>
-
-                        @elseif($activity->status=='Dipublikasikan')
-
-                            <span class="badge bg-success">
-
-                                Dipublikasikan
-
-                            </span>
-
-                        @else
-
-                            <span class="badge bg-primary">
-
-                                Selesai
-
-                            </span>
-
-                        @endif
-
-                    </td>
-
-                    <td class="text-center">
-
-                        <a href="{{ route('activities.edit',$activity) }}"
-                           class="btn btn-warning btn-sm"
-                           title="Edit">
-
-
-                            <i class="bi bi-pencil"></i>
-
-                        </a>
-
-                        <form
-                            action="{{ route('activities.destroy',$activity) }}"
-                            method="POST"
-                            class="d-inline">
-
-                            @csrf
-
-                            @method('DELETE')
-
-                            <button
-                                type="submit"
-                                class="btn btn-danger btn-sm delete-confirm">
-
-                                <i class="bi bi-trash"></i>
-
-                            </button>
-
-                        </form>
-
-                    </td>
-
-                </tr>
-
-                @empty
-
-                <tr>
-
-                    <td colspan="8"
-                        class="text-center">
-
-                        Belum ada data kegiatan.
-
-                    </td>
-
-                </tr>
-
-                @endforelse
-
-                </tbody>
-
-            </table>
-
-        </div>
-
-        <div class="d-flex justify-content-center mt-4">
-
-            {{ $activities->links() }}
+            <div class="d-flex justify-content-center justify-content-md-end mt-4">
+                {{ $activities->links() }}
+            </div>
 
         </div>
 
