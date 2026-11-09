@@ -8,7 +8,6 @@ use App\Http\Controllers\ActivityController;
 use App\Http\Controllers\DocumentationController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\LinkController;
-use App\Http\Controllers\PublicationDocumentationController;
 
 /*
 |--------------------------------------------------------------------------
@@ -38,38 +37,26 @@ Route::middleware(['auth'])->group(function () {
     // Manajemen instansi
     Route::resource('institutions', InstitutionController::class);
 
-    /*
-    |--------------------------------------------------------------------------
-    | Manajemen Kegiatan
-    |--------------------------------------------------------------------------
-    */
-
-    // Cetak surat undangan PDF untuk satu kegiatan
-    // Letakkan sebelum Route::resource('activities', ...)
+    // Cetak PDF kegiatan
     Route::get(
         'activities/{activity}/export/pdf',
         [ActivityController::class, 'exportPdf']
     )->name('activities.export.pdf');
 
-    // Daftar, tambah, simpan, edit, perbarui, dan hapus kegiatan
+    // Manajemen kegiatan
     Route::resource('activities', ActivityController::class);
 
-    // Data kalender kegiatan
+    // Kalender kegiatan
     Route::get(
         '/calendar-events',
         [ActivityController::class, 'calendar']
     )->name('calendar.events');
 
-    // Dokumentasi kegiatan
+    // Manajemen dokumentasi dan link publikasi
     Route::resource('documentations', DocumentationController::class);
 
-    // Tautan publikasi
+    // Route link lama tetap dipertahankan untuk menjaga kompatibilitas
     Route::resource('links', LinkController::class);
-
-    Route::get(
-    '/publication-documentations',
-    [PublicationDocumentationController::class, 'index']
-    )->name('publication-documentations.index');
 });
 
 /*

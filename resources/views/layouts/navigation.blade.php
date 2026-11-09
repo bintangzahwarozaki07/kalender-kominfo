@@ -2,7 +2,8 @@
     <div class="container-fluid">
 
         <a class="navbar-brand fw-bold" href="{{ route('dashboard') }}">
-            📅 Kalender Publikasi Kominfo
+            <i class="bi bi-calendar-event me-2"></i>
+            Kalender Publikasi Kominfo
         </a>
 
         <button class="navbar-toggler"
@@ -11,7 +12,6 @@
                 data-bs-target="#navbarNav">
 
             <span class="navbar-toggler-icon"></span>
-
         </button>
 
         <div class="collapse navbar-collapse" id="navbarNav">
@@ -31,26 +31,23 @@
                 </li>
 
                 <li class="nav-item">
-                    <a class="nav-link" href="#">
+                    <a class="nav-link" href="{{ route('institutions.index') }}">
                         Instansi
                     </a>
                 </li>
 
                 <li class="nav-item">
-                    <a class="nav-link" href="#">
-                        Kalender Publikasi
+                    <a class="nav-link" href="{{ route('activities.index') }}">
+                        Kegiatan
                     </a>
                 </li>
 
-                
                 <li class="nav-item">
-                    <a class="nav-link"
-                     href="{{ route('publication-documentations.index') }}">
-                     <i class="bi bi-collection"></i>
-                    Publikasi & Dokumentasi
+                    <a class="nav-link" href="{{ route('documentations.index') }}">
+                        <i class="bi bi-images me-1"></i>
+                        Dokumentasi
                     </a>
                 </li>
-
 
             </ul>
 
@@ -61,21 +58,17 @@
                 </li>
 
                 <li class="nav-item">
-
                     <form method="POST" action="{{ route('logout') }}">
                         @csrf
 
                         <button class="btn btn-danger btn-sm">
                             Logout
                         </button>
-
                     </form>
-
                 </li>
 
             </ul>
 
         </div>
-
     </div>
 </nav>

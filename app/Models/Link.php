@@ -8,6 +8,7 @@ class Link extends Model
 {
     protected $fillable = [
         'activity_id',
+        'documentation_id',
         'title',
         'url',
         'platform'
@@ -16,5 +17,10 @@ class Link extends Model
     public function activity()
     {
         return $this->belongsTo(Activity::class);
+    }
+
+    public function documentation()
+    {
+        return $this->belongsTo(Documentation::class);
     }
 }

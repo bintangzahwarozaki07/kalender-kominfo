@@ -17,4 +17,9 @@ class Documentation extends Model
     {
         return $this->belongsTo(Activity::class);
     }
+
+    public function links()
+    {
+        return $this->hasMany(Link::class);
+    }
 }
