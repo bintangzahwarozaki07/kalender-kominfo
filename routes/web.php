@@ -8,6 +8,7 @@ use App\Http\Controllers\ActivityController;
 use App\Http\Controllers\DocumentationController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\LinkController;
+use App\Http\Controllers\PublicationDocumentationController;
 
 /*
 |--------------------------------------------------------------------------
@@ -64,6 +65,11 @@ Route::middleware(['auth'])->group(function () {
 
     // Tautan publikasi
     Route::resource('links', LinkController::class);
+
+    Route::get(
+    '/publication-documentations',
+    [PublicationDocumentationController::class, 'index']
+    )->name('publication-documentations.index');
 });
 
 /*

@@ -79,17 +79,11 @@
 
             </a>
 
-            <a href="{{ route('documentations.index') }}"
+            <a href="{{ route('publication-documentations.index') }}"
                class="list-group-item list-group-item-action">
 
-                🖼 Dokumentasi
-
-            </a>
-
-            <a href="{{ route('links.index') }}"
-               class="list-group-item list-group-item-action">
-
-                🔗 Link Publikasi
+               <i class="bi bi-collection"></i>
+               Publikasi & Dokumentasi
 
             </a>
 

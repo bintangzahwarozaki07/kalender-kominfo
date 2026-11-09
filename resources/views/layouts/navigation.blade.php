@@ -42,17 +42,15 @@
                     </a>
                 </li>
 
+                
                 <li class="nav-item">
-                    <a class="nav-link" href="#">
-                        Dokumentasi
+                    <a class="nav-link"
+                     href="{{ route('publication-documentations.index') }}">
+                     <i class="bi bi-collection"></i>
+                    Publikasi & Dokumentasi
                     </a>
                 </li>
 
-                <li class="nav-item">
-                    <a class="nav-link" href="#">
-                        Link Publikasi
-                    </a>
-                </li>
 
             </ul>
 
