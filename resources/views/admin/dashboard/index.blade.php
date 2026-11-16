@@ -3,254 +3,236 @@
 @section('title', 'Dashboard')
 
 @section('content')
+<div class="sipkp-dashboard">
 
-<div class="container-fluid">
-
-    {{-- Header Dashboard --}}
-    <div class="row mb-4 align-items-center">
-        <div class="col-lg-8">
-            <h2 class="fw-bold mb-1">
-                <i class="bi bi-speedometer2 text-success"></i>
-                Dashboard Kalender Publikasi Kominfo
-            </h2>
-
-            <p class="text-muted mb-0">
-                Selamat datang di Sistem Informasi Kalender Publikasi
-                Dinas Komunikasi dan Informatika.
-            </p>
+    {{-- HEADER --}}
+    <section class="dashboard-heading">
+        <div>
+            <div class="dashboard-eyebrow">
+                <span class="eyebrow-dot"></span>
+                SISTEM INFORMASI PUBLIKASI
+            </div>
+            <h1>Dashboard</h1>
+            <p>Selamat datang di pusat pengelolaan kalender publikasi Kominfo Ngawi.</p>
         </div>
 
-        <div class="col-lg-4 text-lg-end mt-3 mt-lg-0">
-            <a href="{{ route('activities.create') }}"
-               class="btn btn-success mb-2">
-                <i class="bi bi-plus-circle"></i>
+        <div class="dashboard-actions">
+            <a href="{{ route('activities.create') }}" class="btn-dashboard-primary">
+                <i class="bi bi-plus-lg"></i>
                 Tambah Kegiatan
             </a>
-
-            <a href="{{ route('activities.index') }}"
-               class="btn btn-danger mb-2">
+            <a href="{{ route('activities.index') }}" class="btn-dashboard-secondary">
                 <i class="bi bi-file-earmark-pdf"></i>
-                Pilih Kegiatan untuk Export PDF
+                Export PDF
             </a>
         </div>
-    </div>
+    </section>
 
-    {{-- Statistik --}}
-    <div class="row g-4">
+    {{-- STATISTIK --}}
+    <section class="dashboard-stats">
+        <article class="stat-card stat-green">
+            <div class="stat-top">
+                <span>Total Kategori</span>
+                <div class="stat-icon"><i class="bi bi-grid-1x2"></i></div>
+            </div>
+            <div class="stat-number">{{ $totalKategori }}</div>
+            <div class="stat-bottom">
+                <span>Data kategori tersimpan</span>
+                <i class="bi bi-arrow-up-right"></i>
+            </div>
+        </article>
 
-        <div class="col-xl col-lg-4 col-md-6">
-            <div class="card border-0 shadow-sm h-100">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <small class="text-muted">Total Kategori</small>
-                            <h2 class="fw-bold text-primary">
-                                {{ $totalKategori }}
-                            </h2>
-                        </div>
+        <article class="stat-card stat-blue">
+            <div class="stat-top">
+                <span>Total Instansi</span>
+                <div class="stat-icon"><i class="bi bi-buildings"></i></div>
+            </div>
+            <div class="stat-number">{{ $totalInstansi }}</div>
+            <div class="stat-bottom">
+                <span>Data instansi terdaftar</span>
+                <i class="bi bi-arrow-up-right"></i>
+            </div>
+        </article>
 
-                        <i class="bi bi-folder-fill text-primary"
-                           style="font-size:45px"></i>
-                    </div>
+        <article class="stat-card stat-orange">
+            <div class="stat-top">
+                <span>Total Kegiatan</span>
+                <div class="stat-icon"><i class="bi bi-calendar-event"></i></div>
+            </div>
+            <div class="stat-number">{{ $totalKegiatan }}</div>
+            <div class="stat-bottom">
+                <span>Seluruh kegiatan</span>
+                <i class="bi bi-arrow-up-right"></i>
+            </div>
+        </article>
+
+        <article class="stat-card stat-purple">
+            <div class="stat-top">
+                <span>Dokumentasi</span>
+                <div class="stat-icon"><i class="bi bi-images"></i></div>
+            </div>
+            <div class="stat-number">{{ $totalDokumentasi }}</div>
+            <div class="stat-bottom">
+                <span>Dokumentasi tersimpan</span>
+                <i class="bi bi-arrow-up-right"></i>
+            </div>
+        </article>
+
+        <article class="stat-card stat-cyan">
+            <div class="stat-top">
+                <span>Link Publikasi</span>
+                <div class="stat-icon"><i class="bi bi-link-45deg"></i></div>
+            </div>
+            <div class="stat-number">{{ $totalLink }}</div>
+            <div class="stat-bottom">
+                <span>Tautan publikasi tersimpan</span>
+                <i class="bi bi-arrow-up-right"></i>
+            </div>
+        </article>
+    </section>
+
+    {{-- GRAFIK --}}
+    <section class="dashboard-chart-grid">
+        <div class="dashboard-panel">
+            <div class="panel-heading">
+                <div>
+                    <h3>Status Kegiatan</h3>
+                    <p>Distribusi kegiatan berdasarkan status</p>
                 </div>
+                <span class="panel-icon"><i class="bi bi-bar-chart-line"></i></span>
+            </div>
+            <div class="chart-container">
+                <canvas id="statusChart"></canvas>
             </div>
         </div>
 
-        <div class="col-xl col-lg-4 col-md-6">
-            <div class="card border-0 shadow-sm h-100">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <small class="text-muted">Total Instansi</small>
-                            <h2 class="fw-bold text-success">
-                                {{ $totalInstansi }}
-                            </h2>
-                        </div>
-
-                        <i class="bi bi-building text-success"
-                           style="font-size:45px"></i>
-                    </div>
+        <div class="dashboard-panel">
+            <div class="panel-heading">
+                <div>
+                    <h3>Aktivitas Bulanan</h3>
+                    <p>Jumlah kegiatan berdasarkan bulan</p>
                 </div>
+                <span class="panel-icon"><i class="bi bi-graph-up-arrow"></i></span>
+            </div>
+            <div class="chart-container">
+                <canvas id="bulanChart"></canvas>
             </div>
         </div>
+    </section>
 
-        <div class="col-xl col-lg-4 col-md-6">
-            <div class="card border-0 shadow-sm h-100">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <small class="text-muted">Total Kegiatan</small>
-                            <h2 class="fw-bold text-warning">
-                                {{ $totalKegiatan }}
-                            </h2>
-                        </div>
-
-                        <i class="bi bi-calendar-event-fill text-warning"
-                           style="font-size:45px"></i>
-                    </div>
-                </div>
+    {{-- KALENDER --}}
+    <section class="dashboard-panel calendar-panel">
+        <div class="panel-heading calendar-heading">
+            <div>
+                <div class="panel-kicker">PERENCANAAN DAN PUBLIKASI</div>
+                <h3>Kalender Kegiatan</h3>
+                <p>Pantau jadwal kegiatan dan publikasi dinas.</p>
             </div>
+            <span class="calendar-heading-icon">
+                <i class="bi bi-calendar3"></i>
+            </span>
         </div>
 
-        <div class="col-xl col-lg-4 col-md-6">
-            <div class="card border-0 shadow-sm h-100">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <small class="text-muted">Total Dokumentasi</small>
-                            <h2 class="fw-bold text-danger">
-                                {{ $totalDokumentasi }}
-                            </h2>
-                        </div>
+        <div id="calendarMessage"></div>
+        <div id="calendar" class="sipkp-calendar"></div>
 
-                        <i class="bi bi-images text-danger"
-                           style="font-size:45px"></i>
-                    </div>
-                </div>
+        <div class="calendar-legend">
+            <span><i class="legend-dot legend-draft"></i> Draft</span>
+            <span><i class="legend-dot legend-scheduled"></i> Terjadwal</span>
+            <span><i class="legend-dot legend-published"></i> Dipublikasikan</span>
+            <span><i class="legend-dot legend-finished"></i> Selesai</span>
+        </div>
+    </section>
+
+    {{-- KEGIATAN TERBARU --}}
+    <section class="dashboard-panel latest-panel">
+        <div class="panel-heading">
+            <div>
+                <h3>Kegiatan Terbaru</h3>
+                <p>Lima data kegiatan yang terakhir ditambahkan.</p>
             </div>
-        </div>
-
-        <div class="col-xl col-lg-4 col-md-6">
-            <div class="card border-0 shadow-sm h-100">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <small class="text-muted">Total Link Publikasi</small>
-                            <h2 class="fw-bold text-info">
-                                {{ $totalLink }}
-                            </h2>
-                        </div>
-
-                        <i class="bi bi-link-45deg text-info"
-                           style="font-size:45px"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-    </div>
-
-    {{-- Grafik --}}
-    <div class="row mt-4">
-
-        <div class="col-lg-6 mb-4">
-            <div class="card shadow-sm border-0 h-100">
-                <div class="card-header bg-primary text-white">
-                    <i class="bi bi-bar-chart-fill"></i>
-                    Grafik Status Kegiatan
-                </div>
-
-                <div class="card-body" style="height:320px">
-                    <canvas id="statusChart"></canvas>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-lg-6 mb-4">
-            <div class="card shadow-sm border-0 h-100">
-                <div class="card-header bg-success text-white">
-                    <i class="bi bi-graph-up"></i>
-                    Grafik Kegiatan per Bulan
-                </div>
-
-                <div class="card-body" style="height:320px">
-                    <canvas id="bulanChart"></canvas>
-                </div>
-            </div>
-        </div>
-
-    </div>
-
-    {{-- Kalender Publikasi --}}
-    <div class="card shadow-sm border-0 mb-4">
-        <div class="card-header bg-info text-white">
-            <i class="bi bi-calendar3"></i>
-            Kalender Publikasi
-        </div>
-
-        <div class="card-body">
-            <div id="calendar"></div>
-        </div>
-    </div>
-
-    {{-- Lima Kegiatan Terbaru --}}
-    <div class="card shadow-sm border-0 mb-4">
-        <div class="card-header bg-dark text-white">
-            <i class="bi bi-clock-history"></i>
-            5 Kegiatan Terbaru
+            <a href="{{ route('activities.index') }}" class="panel-link">
+                Lihat semua <i class="bi bi-arrow-right"></i>
+            </a>
         </div>
 
         <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0">
-
-                <thead class="table-light">
+            <table class="table dashboard-table">
+                <thead>
                     <tr>
-                        <th>Judul</th>
+                        <th>Nama Kegiatan</th>
+                        <th>Kategori</th>
+                        <th>Instansi</th>
                         <th>Tanggal</th>
                         <th>Status</th>
                     </tr>
                 </thead>
-
                 <tbody>
                     @forelse($kegiatanTerbaru as $item)
                         <tr>
-                            <td class="fw-semibold">
-                                {{ $item->title }}
-                            </td>
-
                             <td>
-                                {{ \Carbon\Carbon::parse($item->activity_date)->format('d M Y') }}
+                                <div class="activity-name">
+                                    <span class="activity-table-icon">
+                                        <i class="bi bi-calendar2-check"></i>
+                                    </span>
+                                    <strong>{{ $item->title }}</strong>
+                                </div>
                             </td>
-
+                            <td>{{ $item->category->name ?? '-' }}</td>
+                            <td>{{ $item->institution->name ?? '-' }}</td>
                             <td>
-                                @if($item->status === 'Draft')
-                                    <span class="badge bg-secondary">
-                                        Draft
-                                    </span>
-                                @elseif($item->status === 'Terjadwal')
-                                    <span class="badge bg-warning text-dark">
-                                        Terjadwal
-                                    </span>
-                                @elseif($item->status === 'Dipublikasikan')
-                                    <span class="badge bg-success">
-                                        Dipublikasikan
-                                    </span>
-                                @else
-                                    <span class="badge bg-primary">
-                                        Selesai
-                                    </span>
-                                @endif
+                                {{ \Carbon\Carbon::parse($item->activity_date)->translatedFormat('d M Y') }}
+                            </td>
+                            <td>
+                                @php
+                                    $statusClass = match($item->status) {
+                                        'Draft' => 'status-draft',
+                                        'Terjadwal' => 'status-scheduled',
+                                        'Dipublikasikan' => 'status-published',
+                                        'Selesai' => 'status-finished',
+                                        default => 'status-default',
+                                    };
+                                @endphp
+                                <span class="status-pill {{ $statusClass }}">
+                                    <span></span>
+                                    {{ $item->status ?? 'Belum ditentukan' }}
+                                </span>
                             </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="3" class="text-center text-muted py-4">
-                                <i class="bi bi-inbox fs-3 d-block mb-2"></i>
-                                Belum ada data kegiatan.
+                            <td colspan="5" class="empty-table">
+                                <i class="bi bi-inbox"></i>
+                                <strong>Belum ada kegiatan</strong>
+                                <span>Data kegiatan akan muncul di sini setelah ditambahkan.</span>
                             </td>
                         </tr>
                     @endforelse
                 </tbody>
-
             </table>
         </div>
-    </div>
+    </section>
 
+    <footer class="dashboard-footer">
+        <span>SIPKP · Dinas Kominfo Kabupaten Ngawi</span>
+        <span>Sistem Informasi Kalender Publikasi</span>
+    </footer>
 </div>
-
 @endsection
 
 @push('scripts')
-
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <script>
 document.addEventListener('DOMContentLoaded', function () {
+    const green = '#059669';
+    const textColor = '#64748b';
+    const gridColor = '#edf1f0';
 
     // Grafik status kegiatan
     const statusCanvas = document.getElementById('statusChart');
 
-    if (statusCanvas) {
+    if (statusCanvas && typeof Chart !== 'undefined') {
         new Chart(statusCanvas, {
             type: 'bar',
             data: {
@@ -258,24 +240,26 @@ document.addEventListener('DOMContentLoaded', function () {
                 datasets: [{
                     label: 'Jumlah Kegiatan',
                     data: @json($statusData),
-                    backgroundColor: '#0d6efd',
-                    borderRadius: 5
+                    backgroundColor: ['#94a3b8', '#3b82f6', '#10b981', '#334155'],
+                    borderRadius: 7,
+                    maxBarThickness: 42
                 }]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: {
-                    legend: {
-                        display: true
-                    }
+                    legend: { display: false }
                 },
                 scales: {
+                    x: {
+                        grid: { display: false },
+                        ticks: { color: textColor }
+                    },
                     y: {
                         beginAtZero: true,
-                        ticks: {
-                            precision: 0
-                        }
+                        ticks: { precision: 0, color: textColor },
+                        grid: { color: gridColor }
                     }
                 }
             }
@@ -283,44 +267,48 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     // Grafik kegiatan per bulan
-    const bulanCanvas = document.getElementById('bulanChart');
+    const monthCanvas = document.getElementById('bulanChart');
 
-    if (bulanCanvas) {
-        new Chart(bulanCanvas, {
+    if (monthCanvas && typeof Chart !== 'undefined') {
+        new Chart(monthCanvas, {
             type: 'line',
             data: {
                 labels: @json($bulanLabel),
                 datasets: [{
                     label: 'Jumlah Kegiatan',
                     data: @json($bulanTotal),
-                    borderColor: '#198754',
-                    backgroundColor: 'rgba(25, 135, 84, 0.2)',
+                    borderColor: green,
+                    backgroundColor: 'rgba(5, 150, 105, 0.10)',
                     fill: true,
-                    tension: 0.4,
-                    pointRadius: 4
+                    tension: 0.38,
+                    borderWidth: 3,
+                    pointRadius: 4,
+                    pointHoverRadius: 6,
+                    pointBackgroundColor: '#ffffff',
+                    pointBorderColor: green,
+                    pointBorderWidth: 2
                 }]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: {
-                    legend: {
-                        display: true
-                    }
+                    legend: { display: false }
                 },
                 scales: {
+                    x: {
+                        grid: { display: false },
+                        ticks: { color: textColor }
+                    },
                     y: {
                         beginAtZero: true,
-                        ticks: {
-                            precision: 0
-                        }
+                        ticks: { precision: 0, color: textColor },
+                        grid: { color: gridColor }
                     }
                 }
             }
         });
     }
-
 });
 </script>
-
 @endpush

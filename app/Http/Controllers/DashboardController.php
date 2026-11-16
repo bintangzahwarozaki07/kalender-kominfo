@@ -13,31 +13,19 @@ class DashboardController extends Controller
 {
     public function index()
     {
-        // ==========================
-        // Statistik
-        // ==========================
-
-        $totalKategori      = Category::count();
-        $totalInstansi      = Institution::count();
-        $totalKegiatan      = Activity::count();
-        $totalDokumentasi   = Documentation::count();
-        $totalLink          = Link::count();
-
-        // ==========================
-        // 5 kegiatan terbaru
-        // ==========================
+        $totalKategori = Category::count();
+        $totalInstansi = Institution::count();
+        $totalKegiatan = Activity::count();
+        $totalDokumentasi = Documentation::count();
+        $totalLink = Link::count();
 
         $kegiatanTerbaru = Activity::with([
-                'category',
-                'institution'
-            ])
+            'category',
+            'institution'
+        ])
             ->latest()
             ->take(5)
             ->get();
-
-        // ==========================
-        // Grafik Status
-        // ==========================
 
         $statusLabels = [
             'Draft',
@@ -49,22 +37,16 @@ class DashboardController extends Controller
         $statusData = [];
 
         foreach ($statusLabels as $status) {
-
             $statusData[] = Activity::where(
                 'status',
                 $status
             )->count();
-
         }
 
-        // ==========================
-        // Grafik Bulanan
-        // ==========================
-
         $bulanData = Activity::select(
-                DB::raw('MONTH(activity_date) as bulan'),
-                DB::raw('COUNT(*) as total')
-            )
+            DB::raw('MONTH(activity_date) as bulan'),
+            DB::raw('COUNT(*) as total')
+        )
             ->groupBy('bulan')
             ->orderBy('bulan')
             ->get();
@@ -73,40 +55,64 @@ class DashboardController extends Controller
         $bulanTotal = [];
 
         foreach ($bulanData as $row) {
-
             $bulanLabel[] = date(
                 'F',
-                mktime(0,0,0,$row->bulan,1)
+                mktime(0, 0, 0, $row->bulan, 1)
             );
 
             $bulanTotal[] = $row->total;
-
         }
 
-        $calendarEvents = Activity::select(
-         'id',
-         'title',
-         'activity_date'
-          )->get()->map(function ($item) 
-        { return [
-            'title' => $item->title,
-            'start' => $item->activity_date,
-          ];
-        });
+        $calendarEvents = Activity::with([
+            'category',
+            'institution'
+        ])
+            ->orderBy('activity_date')
+            ->get()
+            ->map(function ($activity) {
+                return [
+                    'id' => $activity->id,
+                    'title' => $activity->title,
+                    'start' => \Carbon\Carbon::parse(
+                        $activity->activity_date
+                    )->format('Y-m-d'),
+                    'allDay' => true,
+                    'backgroundColor' => match ($activity->status) {
+                        'Draft' => '#6c757d',
+                        'Terjadwal' => '#0d6efd',
+                        'Dipublikasikan' => '#198754',
+                        'Selesai' => '#212529',
+                        default => '#0d6efd',
+                    },
+                    'borderColor' => match ($activity->status) {
+                        'Draft' => '#6c757d',
+                        'Terjadwal' => '#0d6efd',
+                        'Dipublikasikan' => '#198754',
+                        'Selesai' => '#212529',
+                        default => '#0d6efd',
+                    },
+                    'extendedProps' => [
+                        'kategori' => $activity->category->name ?? '-',
+                        'lokasi' => $activity->location ?? '-',
+                        'status' => $activity->status ?? '-',
+                        'instansi' => $activity->institution->name ?? '-',
+                    ],
+                ];
+            })
+            ->values();
 
-        return view('admin.dashboard.index',
-         compact(
-           'totalKategori',
-           'totalInstansi',
-           'totalKegiatan',
-           'totalDokumentasi',
-           'totalLink',
-           'kegiatanTerbaru',
-           'statusLabels',
-           'statusData',
-           'bulanLabel',
-           'bulanTotal',
-           'calendarEvents'
+        return view('admin.dashboard.index', compact(
+            'totalKategori',
+            'totalInstansi',
+            'totalKegiatan',
+            'totalDokumentasi',
+            'totalLink',
+            'kegiatanTerbaru',
+            'statusLabels',
+            'statusData',
+            'bulanLabel',
+            'bulanTotal',
+            'calendarEvents'
         ));
     }
 }
