@@ -8,6 +8,7 @@ use App\Models\Institution;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Log;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Validation\Rule;
@@ -353,17 +354,39 @@ class ActivityController extends Controller
     {
         $activity->load(['category', 'institution']);
 
-        $pdf = Pdf::loadView(
-            'admin.activities.pdf',
-            compact('activity')
-        );
+        try {
+            $pdf = Pdf::loadView(
+                'admin.activities.pdf',
+                compact('activity')
+            );
 
-        $pdf->setPaper('A4', 'portrait');
+            $pdf->setPaper('A4', 'portrait');
 
-        $filename = 'Undangan-' .
-            Str::slug($activity->title) . '.pdf';
+            $filename = 'Undangan-' .
+                Str::slug($activity->title) . '.pdf';
 
-        return $pdf->download($filename);
+            $output = $pdf->output();
+
+            return response()->streamDownload(
+                function () use ($output) {
+                    echo $output;
+                },
+                $filename,
+                [
+                    'Content-Type' => 'application/pdf',
+                    'Cache-Control' => 'private, no-store, no-cache',
+                ]
+            );
+        } catch (\Throwable $e) {
+            Log::error(
+                'Gagal export PDF kegiatan: ' . $e->getMessage()
+            );
+
+            return back()->with(
+                'error',
+                'PDF gagal dibuat. Silakan coba kembali.'
+            );
+        }
     }
 
     /**
